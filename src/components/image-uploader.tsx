@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import { Upload, ShieldCheck } from 'lucide-react';
-import { Skeleton } from './ui/skeleton';
-import { Badge } from './ui/badge';
+import { Skeleton } from '../components/ui/skeleton';
+import { Badge } from '../components/ui/badge'
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table';
+} from '../components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 
 // Define the types for the API response
@@ -28,6 +28,7 @@ type DeepfakeResult = {
 type DetectDeepfakeOutput = {
   overall: DeepfakeResult;
   details: DeepfakeResult[];
+  rawResult?: any;
 };
 
 export default function ImageUploader() {
@@ -60,6 +61,7 @@ export default function ImageUploader() {
     setAnalysis(null);
 
     try {
+      // Send base64 image to backend API route
       const response = await fetch('/api/detect', {
         method: 'POST',
         headers: {
@@ -72,37 +74,43 @@ export default function ImageUploader() {
 
       if (!response.ok) {
         const errorBodyText = await response.text();
-        console.error('API Proxy Error:', response.status, errorBodyText);
+        console.error('API Error:', response.status, errorBodyText);
         let errorJson;
         try {
-          // The error from the proxy might be JSON or plain text
           errorJson = JSON.parse(errorBodyText);
         } catch (e) {
           // Not a JSON response, use the raw text
         }
-        throw new Error(errorJson?.error || errorBodyText || `API request failed: ${response.statusText}`);
+        throw new Error(
+          errorJson?.error || errorBodyText || `API request failed: ${response.statusText}`
+        );
       }
 
       const result = await response.json();
-      
+
       // Handle cases where the API returns a success status but an error message in the body
       if (result.error) {
         throw new Error(result.error);
       }
 
+      // Transform result to expected format
       const transformResult = (res: any): DeepfakeResult => ({
-        classification: res.classification,
-        verdict: res.verdict,
-        confidence: res.confidence,
+        classification: res.classification || 'unknown',
+        verdict: res.verdict || 'unknown',
+        confidence: typeof res.confidence === 'number' ? res.confidence : 0,
       });
-      
-      const details = result.results ? Object.values(result.results).map(transformResult) : [];
+
+      const details = result.details
+        ? Array.isArray(result.details)
+          ? result.details.map(transformResult)
+          : Object.values(result.details).map(transformResult)
+        : [];
 
       setAnalysis({
         overall: transformResult(result.overall),
         details: details,
+        rawResult: result.rawResult,
       });
-
     } catch (error: any) {
       console.error('Error detecting deepfake:', error);
       toast({
@@ -121,7 +129,10 @@ export default function ImageUploader() {
       case 'real':
         return 'default';
       case 'fake':
+      case 'deepfake':
         return 'destructive';
+      case 'unknown':
+        return 'secondary';
       default:
         return 'secondary';
     }
@@ -173,47 +184,48 @@ export default function ImageUploader() {
                 <h3 className="font-semibold text-foreground mb-2 text-lg">
                   Deepfake Detection Result:
                 </h3>
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
                   <h4 className="text-base font-medium">Overall Verdict:</h4>
                   <Badge
                     variant={getBadgeVariant(analysis.overall.verdict)}
                     className="text-base"
                   >
-                    {analysis.overall.verdict}
+                    {analysis.overall.verdict.toUpperCase()}
                   </Badge>
-                  <span className="text-xs">
-                    ({(analysis.overall.confidence * 100).toFixed(2)}%
-                    confidence)
-                  </span>
+                
                 </div>
 
-                <h4 className="font-semibold text-foreground mb-2">Details:</h4>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Verdict</TableHead>
-                      <TableHead className="text-right">Confidence</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {analysis.details.map((detail, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">
-                          {detail.classification}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getBadgeVariant(detail.verdict)}>
-                            {detail.verdict}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {(detail.confidence * 100).toFixed(2)}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                {analysis.details && analysis.details.length > 0 && (
+                  <>
+                    <h4 className="font-semibold text-foreground mb-2">Details:</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Verdict</TableHead>
+                          <TableHead className="text-right">Confidence</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {analysis.details.map((detail, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">
+                              {detail.classification}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getBadgeVariant(detail.verdict)}>
+                                {detail.verdict.toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {(detail.confidence * 100).toFixed(2)}%
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </>
+                )}
               </div>
             )}
           </CardFooter>

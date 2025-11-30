@@ -1,6 +1,6 @@
 import Header from '@/components/header';
 import ImageUploader from '@/components/image-uploader';
-
+// import ImageUploader from '@/components/imager2';
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -18,7 +18,7 @@ export default function Home() {
       </main>
       <footer className="py-4">
         <p className="text-center text-sm text-muted-foreground">
-          Built with Next.js and Firebase Studio
+   
         </p>
       </footer>
     </div>
