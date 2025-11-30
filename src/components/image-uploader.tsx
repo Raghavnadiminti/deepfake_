@@ -71,9 +71,15 @@ export default function ImageUploader() {
       });
 
       if (!response.ok) {
-        const errorBody = await response.json();
-        console.error('API Proxy Error:', response.status, errorBody);
-        throw new Error(errorBody.error || `API request failed: ${response.statusText}`);
+        const errorBodyText = await response.text();
+        console.error('API Proxy Error:', response.status, errorBodyText);
+        let errorJson;
+        try {
+          errorJson = JSON.parse(errorBodyText);
+        } catch (e) {
+          // Not a JSON response
+        }
+        throw new Error(errorJson?.error || errorBodyText || `API request failed: ${response.statusText}`);
       }
 
       const result = await response.json();
