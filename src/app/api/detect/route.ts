@@ -32,12 +32,13 @@ export async function POST(request: Request) {
     });
 
     if (!realityDefenderResponse.ok) {
-      const errorBody = await realityDefenderResponse.text(); // Read error as text to avoid JSON parsing errors
+      const errorBody = await realityDefenderResponse.text();
       console.error('Reality Defender API Error:', errorBody);
-      return NextResponse.json(
-        { error: `Failed to detect deepfake: ${errorBody}` },
-        { status: realityDefenderResponse.status }
-      );
+      // Forward the actual error from Reality Defender
+      return new NextResponse(errorBody, {
+        status: realityDefenderResponse.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const result = await realityDefenderResponse.json();
@@ -45,8 +46,9 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Proxy API Error:', error);
+    // This will catch errors from request.json() or if the fetch itself fails
     return NextResponse.json(
-        { error: 'An unexpected error occurred.' },
+        { error: error.message || 'An unexpected error occurred in the proxy.' },
         { status: 500 }
     );
   }

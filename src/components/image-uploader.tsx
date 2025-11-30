@@ -75,15 +75,21 @@ export default function ImageUploader() {
         console.error('API Proxy Error:', response.status, errorBodyText);
         let errorJson;
         try {
+          // The error from the proxy might be JSON or plain text
           errorJson = JSON.parse(errorBodyText);
         } catch (e) {
-          // Not a JSON response
+          // Not a JSON response, use the raw text
         }
         throw new Error(errorJson?.error || errorBodyText || `API request failed: ${response.statusText}`);
       }
 
       const result = await response.json();
       
+      // Handle cases where the API returns a success status but an error message in the body
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
       const transformResult = (res: any): DeepfakeResult => ({
         classification: res.classification,
         verdict: res.verdict,
