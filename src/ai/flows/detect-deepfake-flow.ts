@@ -74,7 +74,9 @@ const detectDeepfakeFlow = ai.defineFlow(
       confidence: res.confidence,
     });
 
-    const details = Object.values(result.results).map(transformResult);
+    // The API response structure for details is an object, not an array.
+    // We need to convert the object values to an array.
+    const details = result.results ? Object.values(result.results).map(transformResult) : [];
 
     return {
       overall: transformResult(result.overall),
