@@ -60,27 +60,20 @@ export default function ImageUploader() {
     setAnalysis(null);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_REALITY_DEFENDER_API_KEY;
-      if (!apiKey) {
-        throw new Error('Reality Defender API key is not configured.');
-      }
-
-      const response = await fetch('https://api.realitydefender.com/v1/media/detect', {
+      const response = await fetch('/api/detect', {
         method: 'POST',
         headers: {
-          'X-API-Key': apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           media: imagePreview,
-          async: false, // Wait for the result
         }),
       });
 
       if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Reality Defender API Error:', response.status, errorBody);
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorBody = await response.json();
+        console.error('API Proxy Error:', response.status, errorBody);
+        throw new Error(errorBody.error || `API request failed: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -90,7 +83,7 @@ export default function ImageUploader() {
         verdict: res.verdict,
         confidence: res.confidence,
       });
-
+      
       const details = result.results ? Object.values(result.results).map(transformResult) : [];
 
       setAnalysis({
@@ -131,7 +124,7 @@ export default function ImageUploader() {
         ref={fileInputRef}
         className="hidden"
       />
-      <Button onClick={handleUploadClick} size="lg">
+      <Button onClick={handleUploadClick} size="lg" className="bg-accent hover:bg-accent/90">
         <Upload className="mr-2" />
         Select Image
       </Button>
