@@ -1,4 +1,5 @@
 import Header from '@/components/header';
+import ImageUploader from '@/components/image-uploader';
 
 export default function Home() {
   return (
@@ -6,13 +7,13 @@ export default function Home() {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
         <div className="flex flex-col items-center justify-center text-center">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                Welcome to your new app!
-            </h1>
-            <p className="max-w-[700px] text-muted-foreground md:text-xl mt-4">
-                This is a starter template. You can start editing this page by modifying{' '}
-                <code className="bg-muted p-1 rounded-md font-mono text-sm">src/app/page.tsx</code>.
-            </p>
+          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+            Upload an Image
+          </h1>
+          <p className="max-w-[700px] text-muted-foreground md:text-xl mt-4 mb-8">
+            Select an image file from your computer to display it below.
+          </p>
+          <ImageUploader />
         </div>
       </main>
       <footer className="py-4">
