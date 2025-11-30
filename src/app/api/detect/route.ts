@@ -32,10 +32,10 @@ export async function POST(request: Request) {
     });
 
     if (!realityDefenderResponse.ok) {
-      const errorBody = await realityDefenderResponse.text();
+      const errorBody = await realityDefenderResponse.text(); // Read error as text to avoid JSON parsing errors
       console.error('Reality Defender API Error:', errorBody);
       return NextResponse.json(
-        { error: `Failed to detect deepfake: ${realityDefenderResponse.statusText}` },
+        { error: `Failed to detect deepfake: ${errorBody}` },
         { status: realityDefenderResponse.status }
       );
     }
