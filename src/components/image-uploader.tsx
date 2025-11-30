@@ -7,10 +7,6 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import { Upload, ShieldCheck } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
-import {
-  detectDeepfake,
-  type DetectDeepfakeOutput,
-} from '@/ai/flows/detect-deepfake-flow';
 import { Badge } from './ui/badge';
 import {
   Table,
@@ -21,6 +17,18 @@ import {
   TableRow,
 } from './ui/table';
 import { useToast } from '@/hooks/use-toast';
+
+// Define the types for the API response
+type DeepfakeResult = {
+  classification: string;
+  verdict: string;
+  confidence: number;
+};
+
+type DetectDeepfakeOutput = {
+  overall: DeepfakeResult;
+  details: DeepfakeResult[];
+};
 
 export default function ImageUploader() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -50,16 +58,52 @@ export default function ImageUploader() {
 
     setIsLoading(true);
     setAnalysis(null);
+
     try {
-      const result = await detectDeepfake({ photoDataUri: imagePreview });
-      setAnalysis(result);
-    } catch (error) {
+      const apiKey = process.env.NEXT_PUBLIC_REALITY_DEFENDER_API_KEY;
+      if (!apiKey) {
+        throw new Error('Reality Defender API key is not configured.');
+      }
+
+      const response = await fetch('https://api.realitydefender.com/v1/media/detect', {
+        method: 'POST',
+        headers: {
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          media: imagePreview,
+          async: false, // Wait for the result
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Reality Defender API Error:', response.status, errorBody);
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      const transformResult = (res: any): DeepfakeResult => ({
+        classification: res.classification,
+        verdict: res.verdict,
+        confidence: res.confidence,
+      });
+
+      const details = result.results ? Object.values(result.results).map(transformResult) : [];
+
+      setAnalysis({
+        overall: transformResult(result.overall),
+        details: details,
+      });
+
+    } catch (error: any) {
       console.error('Error detecting deepfake:', error);
       toast({
         variant: 'destructive',
         title: 'Analysis Failed',
-        description:
-          'Could not analyze the image. Please try again.',
+        description: error.message || 'Could not analyze the image. Please try again.',
       });
       setAnalysis(null);
     } finally {
