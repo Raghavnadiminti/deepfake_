@@ -8,7 +8,7 @@ export default function Home() {
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
         <div className="flex flex-col items-center justify-center text-center">
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-             Detecting DeepFake Videos with 2D Convolutional Neural Networks
+             Detecting DeepFake Videos/Images with 2D Convolutional Neural Networks
           </h1>
           <p className="max-w-[700px] text-muted-foreground md:text-xl mt-4 mb-8">
             Upload an image or video to check if it's a deepfake using AI.
